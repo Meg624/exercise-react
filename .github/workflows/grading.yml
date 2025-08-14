@@ -1,4 +1,4 @@
-name: Auto Grading - React Components
+name: Strict Testing - React Form Components
 
 on:
   push:
@@ -7,225 +7,120 @@ on:
     branches: [main]
 
 jobs:
-  grade:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # ===============================================
+      # 環境セットアップ
+      # ===============================================
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Check React project structure
+      # スクリプトに実行権限を付与
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/*.sh .github/scripts/*.js
+
+      # ===============================================
+      # 1. 必須ファイルの存在確認
+      # ===============================================
+      - name: Check required files
+        run: ./.github/scripts/01-check-required-files.sh
+
+      # ===============================================
+      # 2. useFormフックの検証
+      # ===============================================
+      - name: Verify useForm hook implementation
+        run: node .github/scripts/02-verify-useform-hook.js
+
+      # ===============================================
+      # 3. TypeScript型安全性チェック
+      # ===============================================
+      - name: TypeScript strict type checking
         run: |
-          echo "=== Checking React project structure ==="
+          ./.github/scripts/03a-check-typescript.sh
+          ./.github/scripts/03b-check-any-types.sh || true
 
-          # Check essential files
-          test -f package.json && echo "✅ package.json exists" || echo "❌ package.json missing"
-          test -f tsconfig.json && echo "✅ tsconfig.json exists" || echo "⚠️  tsconfig.json missing"
-          test -f vite.config.ts && echo "✅ vite.config.ts exists" || echo "⚠️  vite.config.ts missing"
+      # ===============================================
+      # 4. コンポーネント実装の検証
+      # ===============================================
+      - name: Verify component implementations
+        run: node .github/scripts/04-verify-components.js
 
-          # Check source structure
-          test -d src && echo "✅ src directory exists" || echo "❌ src directory missing"
-          test -f src/main.tsx && echo "✅ src/main.tsx exists" || echo "⚠️  src/main.tsx missing"
-          test -f src/App.tsx && echo "✅ src/App.tsx exists" || echo "❌ src/App.tsx missing"
-          test -d src/components && echo "✅ src/components directory exists" || echo "❌ src/components directory missing"
+      # ===============================================
+      # 5. アクセシビリティ実装の検証
+      # ===============================================
+      - name: Verify accessibility implementation
+        run: node .github/scripts/05-verify-accessibility.js
 
-      - name: TypeScript type check
+      # ===============================================
+      # 6. ビルドテスト
+      # ===============================================
+      - name: Build test
+        run: ./.github/scripts/06-run-build.sh
+
+      # ===============================================
+      # 7. テスト実行とカバレッジ
+      # ===============================================
+      - name: Run tests with coverage
+        run: node .github/scripts/07a-run-tests.js
+
+      # ===============================================
+      # 8. Lintチェック
+      # ===============================================
+      - name: Lint check
+        run: ./.github/scripts/08-run-lint.sh
+
+      # ===============================================
+      # 9. 総合結果レポート生成
+      # ===============================================
+      - name: Generate test report
+        if: always()
         run: |
-          echo "=== Running TypeScript type check ==="
-          npx tsc --noEmit || echo "⚠️  TypeScript errors found"
+          export JOB_STATUS="${{ job.status }}"
+          node .github/scripts/09-generate-report.js
 
-      - name: Build React application
-        run: |
-          echo "=== Building React application ==="
-          npm run build || { echo "❌ Build failed"; exit 1; }
-          echo "✅ React build successful"
-
-          # Check build output
-          test -d dist && echo "✅ dist directory created" || echo "❌ dist directory missing"
-
-      - name: Run component tests
-        run: |
-          echo "=== Running component tests ==="
-          if grep -q '"test"' package.json; then
-            npm test -- --run || echo "⚠️  Some tests failed"
-          else
-            echo "⚠️  No test script configured"
-          fi
-
-      - name: Analyze React components
-        run: |
-          node -e "
-          const fs = require('fs');
-          const path = require('path');
-
-          console.log('=== React Component Analysis ===');
-
-          // Check for components
-          const componentsDir = 'src/components';
-          if (fs.existsSync(componentsDir)) {
-            const components = fs.readdirSync(componentsDir, { withFileTypes: true });
-            const componentFiles = components.filter(item =>
-              item.isFile() && (item.name.endsWith('.tsx') || item.name.endsWith('.jsx'))
-            );
-            const componentDirs = components.filter(item => item.isDirectory());
-
-            console.log(\`✅ Found \${componentFiles.length} component files\`);
-            console.log(\`✅ Found \${componentDirs.length} component directories\`);
-
-            // Check for common patterns
-            const hasTests = components.some(item => item.name.includes('.test.') || item.name.includes('.spec.'));
-            const hasStyles = components.some(item => item.name.includes('.css') || item.name.includes('.module.'));
-            const hasStories = components.some(item => item.name.includes('.stories.'));
-
-            console.log(hasTests ? '✅ Component tests found' : '⚠️  Add component tests');
-            console.log(hasStyles ? '✅ Component styles found' : '⚠️  Consider component styling');
-            console.log(hasStories ? '✅ Storybook stories found' : '⚠️  Consider adding Storybook');
-          }
-
-          // Check for hooks
-          if (fs.existsSync('src/hooks')) {
-            const hooks = fs.readdirSync('src/hooks').filter(f => f.startsWith('use'));
-            console.log(\`✅ Found \${hooks.length} custom hooks\`);
-          } else {
-            console.log('⚠️  No custom hooks directory found');
-          }
-          "
-
-      - name: Check React best practices
-        run: |
-          echo "=== React Best Practices Check ==="
-
-          # Check for common issues
-          find src -name "*.tsx" -o -name "*.jsx" | xargs grep -l "any" | wc -l | xargs -I {} sh -c 'if [ {} -gt 0 ]; then echo "⚠️  Avoid using 'any' type"; else echo "✅ No 'any' types found"; fi'
-
-          # Check for React imports
-          find src -name "*.tsx" -o -name "*.jsx" | xargs grep -l "import React" | wc -l | xargs -I {} sh -c 'if [ {} -gt 0 ]; then echo "✅ React imports found"; fi'
-
-          # Check package.json for common libraries
-          node -e "
-          const pkg = require('./package.json');
-          const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-
-          const libraries = {
-            'React Router': /react-router/,
-            'State Management': /redux|zustand|jotai|recoil|mobx/,
-            'UI Library': /mui|antd|chakra|mantine/,
-            'Form Handling': /react-hook-form|formik/,
-            'Testing Library': /@testing-library/
-          };
-
-          Object.entries(libraries).forEach(([lib, pattern]) => {
-            const hasLib = Object.keys(deps).some(dep => pattern.test(dep));
-            console.log(\`\${hasLib ? '✅' : '⚠️ '} \${lib}\`);
-          });
-          "
-
-      - name: Check accessibility
-        run: |
-          echo "=== Accessibility Check ==="
-
-          # Basic accessibility checks
-          find src -name "*.tsx" -o -name "*.jsx" | xargs grep -l "aria-" | wc -l | xargs -I {} sh -c 'if [ {} -gt 0 ]; then echo "✅ ARIA attributes found"; else echo "⚠️  Consider adding ARIA attributes"; fi'
-
-          # Check for eslint-plugin-jsx-a11y
-          grep -q "jsx-a11y" package.json && echo "✅ JSX accessibility linting configured" || echo "⚠️  Consider adding eslint-plugin-jsx-a11y"
-
-      - name: Create grading report
-        run: |
-          cat > grading-report.json << EOF
-          {
-            "exercise": "10-react-components",
-            "totalScore": 85,
-            "scores": {
-              "functionality": 34,
-              "codeQuality": 26,
-              "security": 15,
-              "performance": 10
-            },
-            "grade": "B",
-            "feedback": [
-              "✅ Reactプロジェクトが正常にビルドされます",
-              "✅ コンポーネント構造が適切です",
-              "✅ TypeScriptが使用されています",
-              "⚠️  コンポーネントテストを追加してください",
-              "💡 カスタムフックの活用を検討してください"
-            ]
-          }
-          EOF
-
-      - name: Run Lighthouse CI
-        if: github.event_name == 'push'
-        continue-on-error: true
-        run: |
-          npm install -g @lhci/cli serve
-          npm run build
-          serve -s dist -p 3000 &
-          sleep 5
-          lhci autorun --collect.url=http://localhost:3000 --upload.target=temporary-public-storage || true
-          kill %1
-
-      - name: Upload grading report
-        uses: actions/upload-artifact@v3
-        with:
-          name: grading-report
-          path: grading-report.json
-
-      - name: Comment PR with results
+      # ===============================================
+      # 10. PRへのコメント
+      # ===============================================
+      - name: Comment PR with test results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
-            const comment = `## 🎯 採点結果: Reactコンポーネント開発
+            const prComment = require('./.github/scripts/10-pr-comment.js');
+            await prComment(github, context);
 
-            **総合評価**: B (85/100点)
+      # ===============================================
+      # 11. アーティファクトとして保存
+      # ===============================================
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            test-report.json
+            test-report.md
+          retention-days: 30
 
-            ### 📊 評価内訳
-            - 機能性: 34/40点
-            - コード品質: 26/30点
-            - セキュリティ: 15/20点
-            - パフォーマンス: 10/10点
-
-            ### ✅ 実装確認
-            - Reactアプリケーションの正常なビルド
-            - 適切なコンポーネント構造
-            - TypeScriptの使用
-            - モダンなビルドツール（Vite）
-
-            ### 💡 改善提案
-            1. **コンポーネント設計**
-               - 再利用可能なコンポーネントの作成
-               - プロップスの適切な型定義
-               - コンポーネントの単一責任原則
-               - カスタムフックの抽出
-
-            2. **テスト**
-               - React Testing Libraryでのテスト
-               - コンポーネントの単体テスト
-               - 統合テストの追加
-               - テストカバレッジの向上
-
-            3. **パフォーマンス**
-               - React.memoの適切な使用
-               - useMemo/useCallbackの活用
-               - コード分割（lazy loading）
-               - バンドルサイズの最適化
-
-            ### 🚀 次のステップ
-            - Storybookでのコンポーネントカタログ
-            - アクセシビリティの改善
-            - 国際化（i18n）対応
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+      # ===============================================
+      # 12. テスト結果のサマリー表示
+      # ===============================================
+      - name: Display test summary
+        if: always()
+        run: |
+          echo "=== テスト実行完了 ==="
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ すべてのテストに合格しました！"
+          else
+            echo "❌ 一部のテストが失敗しました"
+            echo "詳細は上記のログを確認してください"
+          fi

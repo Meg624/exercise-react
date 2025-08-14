@@ -51,7 +51,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
           required={required}
           disabled={disabled}
           className={`checkbox-field__input ${hasError ? 'checkbox-field__input--error' : ''}`}
-          aria-invalid={hasError}
+          aria-invalid={hasError ? 'true' : 'false'}
           aria-describedby={
             [hasError ? errorId : null, description ? descriptionId : null].filter(Boolean).join(' ') || undefined
           }
@@ -62,7 +62,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
           <span className='checkbox-field__text'>
             {label}
             {required && (
-              <span className='checkbox-field__required' aria-label='必須'>
+              <span className='checkbox-field__required' aria-hidden='true'>
                 *
               </span>
             )}
