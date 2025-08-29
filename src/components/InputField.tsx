@@ -64,7 +64,7 @@ export const InputField: React.FC<InputFieldProps> = ({
         onChange={onChange}
         onBlur={onBlur}
         className={`input-field__input ${hasError ? 'input-field__input--error' : ''}`}
-        aria-invalid={hasError}
+        aria-invalid={hasError ? 'true' : 'false'}
         aria-describedby={hasError ? errorId : undefined}
       />
 
