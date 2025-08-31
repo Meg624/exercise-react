@@ -43,7 +43,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   onChange,
   onBlur,
 }) => {
-  const hasError = touched && error
+  const hasError = touched && error;
 
   return (
     <div className="form-field">
@@ -56,7 +56,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
       <fieldset
         className="radio-group"
         role={"radiogroup"}
-        aria-invalid={hasError}
+        aria-invalid={hasError ? 'true' : undefined}
         aria-describedby={hasError ? `${name}-error` : undefined}
       >
         {/* 【課題36】legend要素を実装してください
@@ -114,7 +114,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
         })}
       </fieldset>
 
-      {hasError && (
+      {error && hasError && (
         <span
           id={`${name}-error`}
           className="form-field__error"

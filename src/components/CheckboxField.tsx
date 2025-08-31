@@ -42,7 +42,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
           onChange={onChange}
           onBlur={() => onBlur()}
           className="checkbox-wrapper__input"
-          aria-invalid={hasError}
+          aria-invalid={Boolean(hasError)}
           aria-describedby={hasError ? `${name}-error` : undefined}
         />
 

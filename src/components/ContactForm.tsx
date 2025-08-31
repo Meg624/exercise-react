@@ -1,178 +1,244 @@
-/**
- * React Form Components - Contact Form
- * カスタムフックを活用したフォーム実装例
- */
-
 import type React from 'react'
 import { useForm } from '../hooks/useForm'
-import InputField from './InputField'
+import { CheckboxField } from './CheckboxField'
+import { InputField } from './InputField'
+import { RadioGroup } from './RadioGroup'
+import { SelectField } from './SelectField'
 
-interface ContactFormData {
+// 【課題41】FormDataインターフェースを定義してください
+// 要件:
+// - name: string
+// - email: string
+// - subject: string
+// - category: string
+// - message: string
+// - subscribe: boolean
+type FormData = {
   name: string
   email: string
-  age: string
-  comment: string
+  subject: string
+  category: string
+  message: string
+  subscribe: boolean
 }
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+function ContactForm(){
+  // 【課題42】フォームの初期値を定義してください
+  // 要件:
+  // - 全フィールドの初期値を設定
+  // - subscribeはfalse、その他は空文字列
+  const initialValues: FormData = {
+    name: '',
+    email: '',
+    subject: '',
+    category: '',
+    message: '',
+    subscribe: false,
+  }
 
-export const ContactForm: React.FC = () => {
-  const { values, errors, touched, isValid, isSubmitting, handleChange, handleBlur, handleSubmit, resetForm } =
-    useForm<ContactFormData>({
-      initialValues: {
-        name: '',
-        email: '',
-        age: '',
-        comment: '',
-      },
-      validationRules: {
-        name: {
-          required: true,
-          minLength: 2,
-          maxLength: 20,
-        },
-        email: {
-          required: true,
-          pattern: emailRegex,
-        },
-        age: {
-          required: true,
-          custom: (value) => {
-            const age = Number.parseInt(value)
-            if (Number.isNaN(age)) return '数値を入力してください'
-            if (age < 0 || age > 120) return '0-120の範囲で入力してください'
-            return undefined
-          },
-        },
-        comment: {
-          maxLength: 200,
-        },
-      },
-      onSubmit: async (data) => {
-        // 実際の送信処理をここに実装
-        console.log('フォーム送信データ:', data)
+  // 【課題43】バリデーションルールを定義してください
+  // 要件:
+  // - name: 必須、最小2文字、最大50文字
+  // - email: 必須、メールアドレスパターン
+  // - subject: 必須
+  // - message: 必須、最小10文字、最大500文字
+  const validationRules = {
+    name: {
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+    },
+    email: {
+      required: true,
+      pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,
+    },
+    subject: {
+      required: true,
+      minLength: 2,
+      maxLength: 100,
+    },
+    message: {
+      required: true,
+      minLength: 10,
+      maxLength: 500,
+    },
+  };
 
-        // 送信のシミュレーション
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+  // 【課題44】フォーム送信処理を実装してください
+  // 要件:
+  // - コンソールに'Form submitted'と値を表示
+  // - 1秒後にalertで成功メッセージを表示
+  // - フォームをリセット
+  const handleFormSubmit = async (formData: FormData) => {
+    console.log('Form submitted', formData);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    alert('フォームが送信されました! ありがとうございます!');
+    resetForm();
+  }
 
-        alert('フォームが正常に送信されました！')
-        resetForm()
-      },
+  // 【課題45】useFormフックを使用してください
+  // 要件:
+  // - initialValues、validationRules、onSubmitを渡す
+  // - 必要な値と関数を取得
+  const { values, errors, touched, isSubmitting, isValid, handleChange, handleBlur, handleSubmit, resetForm } =
+    useForm<FormData>({
+      initialValues,
+      validationRules,
+      onSubmit: handleFormSubmit,
     })
 
+  // カテゴリーオプション
+  const categoryOptions = [
+    { value: 'general', label: '一般的な質問' },
+    { value: 'technical', label: '技術的な質問' },
+    { value: 'billing', label: '請求に関する質問' },
+    { value: 'other', label: 'その他' },
+  ]
+
+  // 件名オプション
+  const subjectOptions = [
+    { value: 'inquiry', label: 'お問い合わせ' },
+    { value: 'feedback', label: 'フィードバック' },
+    { value: 'support', label: 'サポート' },
+  ]
+
   return (
-    <div className='contact-form'>
-      <h2 className='contact-form__title'>お問い合わせフォーム</h2>
+    <form onSubmit={handleSubmit} className="contact-form" noValidate>
+      <h2>お問い合わせフォーム</h2>
 
-      <form onSubmit={handleSubmit} className='contact-form__form' noValidate>
-        <InputField
-          label='お名前'
-          name='name'
-          value={values.name}
-          error={errors.name}
-          touched={touched.name}
-          required
-          placeholder='山田 太郎'
-          onChange={handleChange('name')}
-          onBlur={handleBlur('name')}
+      {/* 【課題46】名前入力フィールドを実装してください
+          要件:
+          - InputFieldコンポーネントを使用
+          - 必須フィールド
+          - エラーとタッチ状態を渡す
+      */}
+      <InputField
+        label="お名前"
+        name="name"
+        value={values.name}
+        error={errors.name}
+        touched={touched.name}
+        required
+        placeholder="須田出井 太郎"
+        onChange={handleChange}
+        onBlur={() => handleBlur('name')}
+      />
+
+      {/* 【課題47】メールアドレス入力フィールドを実装してください
+          要件:
+          - InputFieldコンポーネントを使用
+          - type="email"
+          - 必須フィールド
+      */}
+      <InputField
+        label="メールアドレス"
+        name="email"
+        type="email"
+        value={values.email}
+        error={errors.email}
+        touched={touched.email}
+        required
+        placeholder="example@email.com"
+        onChange={handleChange}
+        onBlur={() => handleBlur('email')}
+      />
+
+      {/* 【課題48】件名選択フィールドを実装してください
+          要件:
+          - RadioGroupコンポーネントを使用
+          - subjectOptionsを使用
+          - 必須フィールド
+      */}
+      <RadioGroup
+        label="件名"
+        name="subject"
+        value={values.subject}
+        options={subjectOptions}
+        error={errors.subject}
+        touched={touched.subject}
+        required={true}
+        onChange={handleChange}
+        onBlur={() => handleBlur('subject')}
+      />
+
+      {/* カテゴリー選択 */}
+      <SelectField
+        label="カテゴリー"
+        name="category"
+        value={values.category}
+        options={categoryOptions}
+        error={errors.category}
+        touched={touched.category}
+        onChange={handleChange}
+        onBlur={() => handleBlur('category')}
+      />
+
+      {/* メッセージ入力 */}
+      <div className="form-field">
+        <label htmlFor="message" className="form-field__label">
+          メッセージ
+          <span className="form-field__required">*</span>
+        </label>
+        <textarea
+          id="message"
+          name="message"
+          value={values.message}
+          onChange={handleChange}
+          onBlur={() => handleBlur('message')}
+          className={`form-field__textarea ${
+            touched.message && errors.message ? 'form-field__textarea--error' : ''
+          }`}
+          rows={5}
+          placeholder="お問い合わせ内容をご記入ください"
+          aria-invalid={touched.message && !!errors.message}
+          aria-describedby={
+            touched.message && errors.message ? 'message-error' : undefined
+          }
         />
-
-        <InputField
-          label='メールアドレス'
-          name='email'
-          type='email'
-          value={values.email}
-          error={errors.email}
-          touched={touched.email}
-          required
-          placeholder='example@email.com'
-          autoComplete='email'
-          onChange={handleChange('email')}
-          onBlur={handleBlur('email')}
-        />
-
-        <InputField
-          label='年齢'
-          name='age'
-          type='number'
-          value={values.age}
-          error={errors.age}
-          touched={touched.age}
-          required
-          placeholder='25'
-          onChange={handleChange('age')}
-          onBlur={handleBlur('age')}
-        />
-
-        <div className='input-field'>
-          <label htmlFor='field-comment' className='input-field__label'>
-            コメント
-            <span className='input-field__optional'>（任意）</span>
-          </label>
-
-          <textarea
-            id='field-comment'
-            name='comment'
-            value={values.comment}
-            placeholder='ご質問やご要望をお聞かせください（200文字以内）'
-            onChange={handleChange('comment')}
-            onBlur={handleBlur('comment')}
-            className={`input-field__textarea ${
-              touched.comment && errors.comment ? 'input-field__textarea--error' : ''
-            }`}
-            rows={4}
-            maxLength={200}
-            aria-invalid={touched.comment && !!errors.comment}
-            aria-describedby={touched.comment && errors.comment ? 'field-comment-error' : undefined}
-          />
-
-          <div className='input-field__info'>
-            <span className='input-field__counter'>{values.comment.length}/200文字</span>
-          </div>
-
-          {touched.comment && errors.comment && (
-            <div id='field-comment-error' className='input-field__error' role='alert'>
-              {errors.comment}
-            </div>
-          )}
-        </div>
-
-        <div className='contact-form__actions'>
-          <button
-            type='submit'
-            disabled={!isValid || isSubmitting}
-            className={`btn btn--primary ${!isValid || isSubmitting ? 'btn--disabled' : ''}`}
-          >
-            {isSubmitting ? (
-              <>
-                <span className='btn__spinner' aria-hidden='true' />
-                送信中...
-              </>
-            ) : (
-              '送信する'
-            )}
-          </button>
-
-          <button type='button' onClick={resetForm} className='btn btn--secondary' disabled={isSubmitting}>
-            リセット
-          </button>
-        </div>
-      </form>
-
-      <div className='contact-form__debug'>
-        <details>
-          <summary>デバッグ情報</summary>
-          <pre>
-            <strong>Values:</strong> {JSON.stringify(values, null, 2)}
-            <strong>Errors:</strong> {JSON.stringify(errors, null, 2)}
-            <strong>Touched:</strong> {JSON.stringify(touched, null, 2)}
-            <strong>Is Valid:</strong> {isValid}
-            <strong>Is Submitting:</strong> {isSubmitting}
-          </pre>
-        </details>
+        {touched.message && errors.message && (
+          <span id="message-error" className="form-field__error" role="alert">
+            {errors.message}
+          </span>
+        )}
       </div>
-    </div>
+
+      {/* 【課題49】メールマガジン購読チェックボックスを実装してください
+          要件:
+          - CheckboxFieldコンポーネントを使用
+          - checkedはvalues.subscribe
+      */}
+      <CheckboxField
+        label="メールマガジンを購読する"
+        name="subscribe"
+        checked={values.subscribe}
+        error={undefined}
+        touched={undefined}
+        onChange={handleChange}
+        onBlur={() => handleBlur('subscribe')}
+      />
+
+      {/* 【課題50】フォームボタンを実装してください
+          要件:
+          - 送信ボタン: type="submit"、送信中は無効化、テキスト変更
+          - リセットボタン: type="button"、resetForm()を呼ぶ
+      */}
+      <div className="form-actions">
+        <button
+          type="submit"
+          disabled={isSubmitting || !isValid}
+          className="button button--primary"
+        >
+          {isSubmitting ? '送信中...' : '送信'}
+        </button>
+        <button
+          type="button"
+          onClick={resetForm }
+          className="button button--secondary"
+        >
+          リセット
+        </button>
+      </div>
+    </form>
   )
 }
-
-export default ContactForm
+export default ContactForm;

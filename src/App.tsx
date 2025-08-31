@@ -1,59 +1,59 @@
-/**
- * React Form Components - Main Application
- * カスタムフックを活用したフォーム実装 - メインアプリケーション
- */
-
-import ContactForm from './components/ContactForm'
+import React from 'react'
+import  ContactForm  from './components/ContactForm'
 import './styles/global.css'
 
+// 【課題51】Appコンポーネントを実装してください
+// 要件:
+// - React.FCを使用
+// - ヘッダー、メインコンテンツ、フィーチャーセクションを含む
 function App() {
   return (
     <div className='app'>
-      <header className='app__header'>
-        <div className='container'>
-          <h1 className='app__title'>React フォームコンポーネント</h1>
-          <p className='app__subtitle'>useFormカスタムフックを活用した実践的なフォーム実装</p>
-        </div>
+      {/* 【課題52】ヘッダーセクションを実装してください
+          要件:
+          - h1タグでタイトル「React Form Example」
+          - pタグで説明文
+      */}
+      <h1>React Form Example</h1>
+      <header className='app-header'>
+        <p>ReactとTypeScriptを使用したフォームの実装例です。</p>
       </header>
 
-      <main className='app__main'>
+      {/* 【課題53】メインセクションを実装してください
+          要件:
+          - ContactFormコンポーネントを配置
+          - containerクラスでラップ
+      */}      
+      <main className='app-main'>
         <div className='container'>
-          <section className='demo-section'>
-            <ContactForm />
-          </section>
-
-          <section className='features-section'>
-            <h2 className='features-section__title'>実装機能</h2>
-            <div className='features-grid'>
-              <div className='feature-card'>
-                <h3 className='feature-card__title'>バリデーション</h3>
-                <p className='feature-card__description'>リアルタイムでの入力値検証とエラーメッセージ表示</p>
-              </div>
-
-              <div className='feature-card'>
-                <h3 className='feature-card__title'>アクセシビリティ</h3>
-                <p className='feature-card__description'>ARIA属性とキーボードナビゲーションの完全対応</p>
-              </div>
-
-              <div className='feature-card'>
-                <h3 className='feature-card__title'>型安全性</h3>
-                <p className='feature-card__description'>TypeScriptによる完全な型チェックとIntelliSense</p>
-              </div>
-
-              <div className='feature-card'>
-                <h3 className='feature-card__title'>再利用性</h3>
-                <p className='feature-card__description'>カスタムフックによるロジックの分離と再利用</p>
-              </div>
-            </div>
-          </section>
+          <ContactForm />
         </div>
       </main>
 
-      <footer className='app__footer'>
+      {/* フィーチャーセクション */}
+      <section className='features'>
         <div className='container'>
-          <p>&copy; 2024 React Form Components - 学習目的で作成</p>
+          <h2>主な機能</h2>
+          <div className='features-grid'>
+            <div className='feature'>
+              <h3>🔍 バリデーション</h3>
+              <p>リアルタイムでフォーム入力を検証</p>
+            </div>
+            <div className='feature'>
+              <h3>♿ アクセシビリティ</h3>
+              <p>ARIA属性とキーボード操作に対応</p>
+            </div>
+            <div className='feature'>
+              <h3>🔒 型安全</h3>
+              <p>TypeScriptによる完全な型サポート</p>
+            </div>
+            <div className='feature'>
+              <h3>♻️ 再利用可能</h3>
+              <p>カスタムフックとコンポーネント設計</p>
+            </div>
+          </div>
         </div>
-      </footer>
+      </section>
     </div>
   )
 }
