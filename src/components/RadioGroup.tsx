@@ -1,19 +1,26 @@
-/**
- * React Form Components - Radio Group Component
- * ラジオボタングループコンポーネント
- */
-
 import type React from 'react'
-import type { ChangeEvent } from 'react'
 
-export interface RadioOption {
+// 【課題33】RadioOptionインターフェースを定義してください
+// 要件:
+// - value: string (必須)
+// - label: string (必須)
+type RadioOption = {
   value: string
   label: string
-  disabled?: boolean
-  description?: string
 }
 
-export interface RadioGroupProps {
+// 【課題34】RadioGroupPropsインターフェースを定義してください
+// 要件:
+// - label: string (必須)
+// - name: string (必須)
+// - value: string (必須)
+// - options: RadioOption[] (必須)
+// - error?: string (オプション)
+// - touched?: boolean (オプション)
+// - required?: boolean (オプション)
+// - onChange: (e: React.ChangeEvent<HTMLInputElement>) => void (必須)
+// - onBlur: () => void (必須)
+type RadioGroupProps = {
   label: string
   name: string
   value: string
@@ -21,11 +28,8 @@ export interface RadioGroupProps {
   error?: string
   touched?: boolean
   required?: boolean
-  disabled?: boolean
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onBlur: () => void
-  className?: string
-  inline?: boolean
 }
 
 export const RadioGroup: React.FC<RadioGroupProps> = ({
@@ -35,71 +39,90 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   options,
   error,
   touched,
-  required = false,
-  disabled = false,
+  required,
   onChange,
   onBlur,
-  className = '',
-  inline = false,
 }) => {
   const hasError = touched && error
-  const groupId = `group-${name}`
-  const errorId = `${groupId}-error`
 
   return (
-    <fieldset className={`radio-group ${inline ? 'radio-group--inline' : ''} ${className}`}>
-      <legend className='radio-group__legend'>
-        {label}
-        {required && (
-          <span className='radio-group__required' aria-label='必須'>
-            *
-          </span>
-        )}
-      </legend>
+    <div className="form-field">
+      {/* 【課題35】fieldset要素を実装してください
+          要件:
+          - role="radiogroup"を追加
+          - aria-invalid属性でエラー状態を示す
+          - aria-describedby属性でエラーメッセージと関連付け
+      */}
+      <fieldset
+        className="radio-group"
+        role={"radiogroup"}
+        aria-invalid={hasError}
+        aria-describedby={hasError ? `${name}-error` : undefined}
+      >
+        {/* 【課題36】legend要素を実装してください
+            要件:
+            - グループのラベルを表示
+            - 必須フィールドの場合は * を表示
+        */}
+        <legend className="radio-group__label">
+          {label}
+          {required && <span className="required-indicator">*</span>}
+        </legend>
 
-      <div className='radio-group__options' role='radiogroup' aria-labelledby={groupId}>
-        {options.map((option) => {
-          const optionId = `${name}-${option.value}`
-          const descriptionId = option.description ? `${optionId}-description` : undefined
+        {/* 【課題37】ラジオボタンのリストを実装してください
+            要件:
+            - options配列をmapで展開
+            - 各オプションにユニークなIDを付与
+        */}
+        {options.map((option, index) => {
+          // 【課題38】ラジオボタンのIDを生成してください
+          // 要件:
+          // - ${name}-${index}の形式
+          const radioId = `${name}-${index}`;
 
           return (
-            <div key={option.value} className='radio-option'>
+            <div key={option.value} className="radio-option">
+              {/* 【課題39】radio input要素を実装してください
+                  要件:
+                  - type="radio"
+                  - idをradioIdに設定
+                  - checkedはvalue === option.valueで判定
+              */}
               <input
-                id={optionId}
+                type="radio"
+                id={radioId}
                 name={name}
-                type='radio'
                 value={option.value}
                 checked={value === option.value}
                 onChange={onChange}
-                onBlur={onBlur}
-                disabled={disabled || option.disabled}
-                className={`radio-option__input ${hasError ? 'radio-option__input--error' : ''}`}
-                aria-invalid={hasError}
-                aria-describedby={[hasError ? errorId : null, descriptionId].filter(Boolean).join(' ') || undefined}
+                onBlur={() => onBlur()}
+                className="radio-option__input"
               />
 
-              <label htmlFor={optionId} className='radio-option__label'>
-                <span className='radio-option__radio' aria-hidden='true' />
-                <span className='radio-option__text'>{option.label}</span>
+              {/* 【課題40】ラジオボタンのラベルを実装してください
+                  要件:
+                  - htmlFor属性でinput要素と関連付け
+              */}
+              <label
+                htmlFor={radioId}
+                className="radio-option__label"
+              >
+                {option.label}
               </label>
-
-              {option.description && (
-                <div id={descriptionId} className='radio-option__description'>
-                  {option.description}
-                </div>
-              )}
             </div>
-          )
+          );
         })}
-      </div>
+      </fieldset>
 
       {hasError && (
-        <div id={errorId} className='radio-group__error' role='alert'>
+        <span
+          id={`${name}-error`}
+          className="form-field__error"
+          role="alert"
+        >
           {error}
-        </div>
+        </span>
       )}
-    </fieldset>
-  )
+    </div>
+  );
 }
-
-export default RadioGroup
