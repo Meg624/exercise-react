@@ -1,29 +1,21 @@
 import React from 'react'
-import  ContactForm  from './components/ContactForm'
+import ContactForm from './components/ContactForm'
 import './styles/global.css'
 
 // 【課題51】Appコンポーネントを実装してください
 // 要件:
 // - React.FCを使用
 // - ヘッダー、メインコンテンツ、フィーチャーセクションを含む
-function App() {
+const App: React.FC = () => {
   return (
     <div className='app'>
-      {/* 【課題52】ヘッダーセクションを実装してください
-          要件:
-          - h1タグでタイトル「React Form Example」
-          - pタグで説明文
-      */}
-      <h1>React Form Example</h1>
+      {/* 【課題52】ヘッダーセクションを実装してください */}
       <header className='app-header'>
+        <h1>React Form Example</h1>
         <p>ReactとTypeScriptを使用したフォームの実装例です。</p>
       </header>
 
-      {/* 【課題53】メインセクションを実装してください
-          要件:
-          - ContactFormコンポーネントを配置
-          - containerクラスでラップ
-      */}      
+      {/* 【課題53】メインセクションを実装してください */}      
       <main className='app-main'>
         <div className='container'>
           <ContactForm />

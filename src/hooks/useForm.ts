@@ -1,217 +1,268 @@
-/**
- * React Form Components - useForm Hook
- * フォーム状態管理カスタムフック
- */
-
 import { type ChangeEvent, useCallback, useState } from 'react'
 
-export interface FormField {
-  value: string
-  error?: string
-  touched: boolean
-}
-
-export interface ValidationRule {
+// バリデーションルールの型定義
+interface ValidationRule {
   required?: boolean
   minLength?: number
   maxLength?: number
   pattern?: RegExp
-  custom?: (value: string) => string | undefined
+  custom?: (value: any) => string | undefined
 }
 
-export interface FormConfig<T extends Record<string, unknown>> {
+type ValidationRules<T> = {
+  [K in keyof T]?: ValidationRule
+}
+
+// useFormフックのオプション
+interface UseFormOptions<T> {
   initialValues: T
-  validationRules?: Partial<Record<keyof T, ValidationRule>>
-  onSubmit?: (values: T) => void | Promise<void>
+  validationRules?: ValidationRules<T>
+  onSubmit: (values: T) => void | Promise<void>
 }
 
-export interface UseFormReturn<T extends Record<string, unknown>> {
-  values: T
-  errors: Partial<Record<keyof T, string>>
-  touched: Partial<Record<keyof T, boolean>>
-  isValid: boolean
-  isSubmitting: boolean
-  handleChange: (
-    name: keyof T,
-  ) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
-  handleBlur: (name: keyof T) => () => void
-  setValue: (name: keyof T, value: string) => void
-  setError: (name: keyof T, error: string) => void
-  resetForm: () => void
-  handleSubmit: (event?: React.FormEvent) => Promise<void>
-  validateField: (name: keyof T) => string | undefined
-  validateForm: () => boolean
-}
-
-export function useForm<T extends Record<string, unknown>>({
+// 【課題1】useFormフックを実装してください
+// 要件:
+// - ジェネリクスTを使用（T extends Record<string, any>）
+// - values、errors、touched、isSubmittingの状態を管理
+// - 各種ハンドラーとユーティリティ関数を返す
+export function useForm<T extends Record<string, any>>({
   initialValues,
-  validationRules = {},
+  validationRules,
   onSubmit,
-}: FormConfig<T>): UseFormReturn<T> {
+}: UseFormOptions<T>) {
+  // 【課題2】フォームの状態を管理するuseStateを実装してください
+  // 要件:
+  // - values: T型
+  // - errors: Partial<Record<keyof T, string>>型
+  // - touched: Partial<Record<keyof T, boolean>>型
+  // - isSubmitting: boolean型
   const [values, setValues] = useState<T>(initialValues)
   const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({})
   const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // 【課題3】単一フィールドのバリデーション関数を実装してください
+  // 要件:
+  // - フィールド名と値を受け取る
+  // - バリデーションルールに基づいてエラーメッセージを返す
+  // - エラーがない場合はundefinedを返す
   const validateField = useCallback(
-    (name: keyof T): string | undefined => {
-      const value = values[name]
-      const rules = validationRules[name]
-
+    (name: keyof T, value: any): string | undefined => {
+      const rules = validationRules?.[name]
       if (!rules) return undefined
 
-      // Required validation
-      if (rules.required && (!value || value.toString().trim() === '')) {
-        return 'この項目は必須です'
+      // 【課題4】必須チェックを実装してください
+      // 要件:
+      // - rules.requiredがtrueで値が空の場合
+      // - 文字列の場合はtrimして空文字をチェック
+      if (rules.required) {
+        if ( value === undefined || value === null || (typeof value === 'string' && value.trim() === '') ) {
+          return '必須項目です'
+        }
       }
 
-      // Skip other validations if field is empty and not required
-      if (!value || value.toString().trim() === '') {
-        return undefined
+      // 【課題5】最小文字数チェックを実装してください
+      // 要件:
+      // - rules.minLengthが指定されている場合
+      // - 文字列の長さをチェック
+      if (rules.minLength && typeof value === 'string') {
+        if (value.length < rules.minLength) {
+          return `最小${rules.minLength}文字以上で入力してください`
+        }
       }
 
-      const stringValue = value.toString()
-
-      // MinLength validation
-      if (rules.minLength && stringValue.length < rules.minLength) {
-        return `${rules.minLength}文字以上で入力してください`
+      // 【課題6】最大文字数チェックを実装してください
+      // 要件:
+      // - rules.maxLengthが指定されている場合
+      // - 文字列の長さをチェック
+      if (rules.maxLength && typeof value === 'string') {
+        if (value.length > rules.maxLength) {
+          return `最大${rules.maxLength}文字以内で入力してください`
+        }
       }
 
-      // MaxLength validation
-      if (rules.maxLength && stringValue.length > rules.maxLength) {
-        return `${rules.maxLength}文字以内で入力してください`
+      // 【課題7】パターンマッチングチェックを実装してください
+      // 要件:
+      // - rules.patternが指定されている場合
+      // - 正規表現でチェック
+      if (rules.pattern && typeof value === 'string') {
+        if (!rules.pattern.test(value)) {
+          return '形式が正しくありません'
+        }
       }
 
-      // Pattern validation
-      if (rules.pattern && !rules.pattern.test(stringValue)) {
-        return '形式が正しくありません'
-      }
-
-      // Custom validation
+      // 【課題8】カスタムバリデーションを実装してください
+      // 要件:
+      // - rules.custom関数が指定されている場合
+      // - custom関数を実行して結果を返す
       if (rules.custom) {
-        return rules.custom(stringValue)
+        return rules.custom(value)
       }
 
       return undefined
     },
-    [values, validationRules],
+    [validationRules],
   )
 
-  const validateForm = useCallback((): boolean => {
+  // 【課題9】全フィールドのバリデーション関数を実装してください
+  // 要件:
+  // - すべてのフィールドをループしてvalidateFieldを実行
+  // - エラーがあるフィールドのみを含むオブジェクトを返す
+  const validateForm = useCallback((): Partial<Record<keyof T, string>> => {
     const newErrors: Partial<Record<keyof T, string>> = {}
-    let isFormValid = true
 
-    Object.keys(initialValues).forEach((key) => {
+    Object.keys(values).forEach((key) => {
       const fieldName = key as keyof T
-      const error = validateField(fieldName)
+      const error = validateField(fieldName, values[fieldName])
       if (error) {
         newErrors[fieldName] = error
-        isFormValid = false
       }
     })
 
-    setErrors(newErrors)
-    return isFormValid
-  }, [initialValues, validateField])
+    return newErrors
+  }, [values, validateField])
 
-  const isValid = Object.keys(errors).length === 0 && Object.keys(touched).length > 0
-
+  // 【課題10】onChange ハンドラーを実装してください
+  // 要件:
+  // - input要素のname属性からフィールド名を取得
+  // - 値を更新
+  // - touchedの場合はバリデーションを実行
   const handleChange = useCallback(
-    (name: keyof T) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      const { value, type, checked } = event.target as HTMLInputElement
-      const fieldValue = type === 'checkbox' ? checked : value
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      if (!e?.target) return;
+      const { name, value, type } = e.target
+      const fieldName = name as keyof T
 
-      setValues((prev) => ({ ...prev, [name]: fieldValue }))
+      // 【課題11】チェックボックスの値処理を実装してください
+      // 要件:
+      // - typeが'checkbox'の場合はchecked属性を使用
+      // - それ以外はvalueを使用
+      let fieldValue: any
+      if (type === 'checkbox') {
+        fieldValue = (e.target as HTMLInputElement).checked
+      } else {
+        fieldValue = value
+      }
 
-      // Clear error when user starts typing
-      if (errors[name]) {
-        setErrors((prev) => {
-          const newErrors = { ...prev }
-          delete newErrors[name]
-          return newErrors
-        })
+      // 値を更新
+      setValues((prev) => ({
+        ...prev,
+        [fieldName]: fieldValue,
+      }))
+
+      // 【課題12】touchedフィールドのバリデーションを実装してください
+      // 要件:
+      // - touched[fieldName]がtrueの場合のみバリデーション
+      // - エラーを更新
+      if (touched[fieldName]) {
+        const error = validateField(fieldName, fieldValue)
+        setErrors((prev) => ({
+          ...prev,
+          [fieldName]: error
+        }))
       }
     },
-    [errors],
+    [touched, validateField],
   )
 
+  // 【課題13】onBlur ハンドラーを実装してください
+  // 要件:
+  // - フィールドをtouchedに設定
+  // - バリデーションを実行してエラーを更新
   const handleBlur = useCallback(
-    (name: keyof T) => () => {
-      setTouched((prev) => ({ ...prev, [name]: true }))
-
-      const error = validateField(name)
-      if (error) {
-        setErrors((prev) => ({ ...prev, [name]: error }))
-      }
+    (name: keyof T) => {
+      setTouched((prev) => ({
+        ...prev,
+        [name]: true
+      }))
+      const error = validateField(name, values[name])
+      setErrors((prev) => ({
+        ...prev,
+        [name]: error
+      }))
     },
-    [validateField],
+    [values, validateField],
   )
 
-  const setValue = useCallback((name: keyof T, value: string) => {
-    setValues((prev) => ({ ...prev, [name]: value }))
-  }, [])
+  // 【課題14】フォーム送信ハンドラーを実装してください
+  // 要件:
+  // - デフォルトの送信動作を防ぐ
+  // - 全フィールドのバリデーション
+  // - エラーがない場合のみonSubmitを実行
+  // - isSubmittingの状態管理
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      setIsSubmitting(true)
 
-  const setError = useCallback((name: keyof T, error: string) => {
-    setErrors((prev) => ({ ...prev, [name]: error }))
-  }, [])
+      const newErrors = validateForm()
+      setErrors(newErrors)
 
+      if (Object.keys(newErrors).length === 0) {
+        await onSubmit(values)
+      }
+
+      setIsSubmitting(false)
+    },
+    [validateForm, values, onSubmit],
+  )
+
+  // 【課題15】フォームリセット関数を実装してください
+  // 要件:
+  // - すべての状態を初期値に戻す
   const resetForm = useCallback(() => {
     setValues(initialValues)
     setErrors({})
     setTouched({})
-    setIsSubmitting(false)
   }, [initialValues])
 
-  const handleSubmit = useCallback(
-    async (event?: React.FormEvent) => {
-      if (event) {
-        event.preventDefault()
-      }
-
-      setIsSubmitting(true)
-
-      try {
-        // Mark all fields as touched
-        const allTouched = Object.keys(initialValues).reduce(
-          (acc, key) => {
-            acc[key as keyof T] = true
-            return acc
-          },
-          {} as Partial<Record<keyof T, boolean>>,
-        )
-        setTouched(allTouched)
-
-        // Validate form
-        if (!validateForm()) {
-          return
-        }
-
-        // Submit form
-        if (onSubmit) {
-          await onSubmit(values)
-        }
-      } catch (error) {
-        console.error('Form submission error:', error)
-      } finally {
-        setIsSubmitting(false)
+  // 【課題16】特定フィールドの値設定関数を実装してください
+  // 要件:
+  // - フィールド名と値を受け取る
+  // - 値を更新
+  // - touchedの場合はバリデーション
+  const setFieldValue = useCallback(
+    (name: keyof T, value: any) => {
+      setValues((prev) => ({
+        ...prev,
+        [name]: value
+      }))
+      if (touched[name]) {
+        const error = validateField(name, value)
+        setErrors((prev) => ({
+          ...prev,
+          [name]: error
+        }))
       }
     },
-    [initialValues, validateForm, onSubmit, values],
+    [touched, validateField],
   )
+
+  // 【課題17】特定フィールドのエラー設定関数を実装してください
+  // 要件:
+  // - フィールド名とエラーメッセージを受け取る
+  // - エラーを更新
+  const setFieldError = useCallback((name: keyof T, error: string) => {
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error
+    }))
+  }, [])
+
+  // フォームの有効性チェック
+  const isValid = Object.keys(errors).length === 0
 
   return {
     values,
     errors,
     touched,
-    isValid,
     isSubmitting,
+    isValid,
     handleChange,
     handleBlur,
-    setValue,
-    setError,
-    resetForm,
     handleSubmit,
-    validateField,
-    validateForm,
+    resetForm,
+    setFieldValue,
+    setFieldError,
   }
 }

@@ -1,80 +1,61 @@
-/**
- * React Form Components - Input Field Component
- * 再利用可能な入力フィールドコンポーネント
- */
-
+// 【課題30】InputFieldコンポーネント
 import type React from 'react'
-import type { ChangeEvent } from 'react'
 
-export interface InputFieldProps {
+type InputFieldProps = {
   label: string
   name: string
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
   value: string
+  type?: string
+  placeholder?: string
   error?: string
   touched?: boolean
-  placeholder?: string
   required?: boolean
-  disabled?: boolean
-  autoComplete?: string
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onBlur: () => void
-  className?: string
 }
 
 export const InputField: React.FC<InputFieldProps> = ({
   label,
   name,
-  type = 'text',
   value,
+  type = 'text',
+  placeholder,
   error,
   touched,
-  placeholder,
-  required = false,
-  disabled = false,
-  autoComplete,
+  required,
   onChange,
   onBlur,
-  className = '',
 }) => {
   const hasError = touched && error
-  const fieldId = `field-${name}`
-  const errorId = `${fieldId}-error`
 
   return (
-    <div className={`input-field ${className}`}>
-      <label htmlFor={fieldId} className='input-field__label'>
+    <div className="input-field">
+      {/* 【課題31】ラベル */}
+      <label htmlFor={name} className="input-field__label">
         {label}
-        {required && (
-          <span className='input-field__required' aria-label='必須'>
-            *
-          </span>
-        )}
+        {required && <span className="input-field__required">*</span>}
       </label>
 
+      {/* 【課題32】input要素 */}
       <input
-        id={fieldId}
+        id={name}
         name={name}
         type={type}
         value={value}
         placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        autoComplete={autoComplete}
         onChange={onChange}
         onBlur={onBlur}
         className={`input-field__input ${hasError ? 'input-field__input--error' : ''}`}
         aria-invalid={hasError ? 'true' : 'false'}
-        aria-describedby={hasError ? errorId : undefined}
+        aria-describedby={hasError ? `${name}-error` : undefined}
       />
 
+      {/* 【課題33】エラーメッセージ */}
       {hasError && (
-        <div id={errorId} className='input-field__error' role='alert'>
+        <span id={`${name}-error`} className="input-field__error" role="alert">
           {error}
-        </div>
+        </span>
       )}
     </div>
   )
 }
-
-export default InputField
