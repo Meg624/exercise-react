@@ -26,7 +26,8 @@ export const InputField: React.FC<InputFieldProps> = ({
   onChange,
   onBlur,
 }) => {
-  const hasError = touched && error
+  // エラーがあるか判定
+  const hasError = touched && !!error
 
   return (
     <div className="input-field">
@@ -38,7 +39,6 @@ export const InputField: React.FC<InputFieldProps> = ({
 
       {/* 【課題32】input要素 */}
       <input
-        id={name}
         name={name}
         type={type}
         value={value}
@@ -46,13 +46,13 @@ export const InputField: React.FC<InputFieldProps> = ({
         onChange={onChange}
         onBlur={onBlur}
         className={`input-field__input ${hasError ? 'input-field__input--error' : ''}`}
-        aria-invalid={hasError ? 'true' : 'false'}
-        aria-describedby={hasError ? `${name}-error` : undefined}
+        aria-invalid={error ? 'true' : 'false'}
+        aria-describedby={error ? `${name}-error` : undefined}
       />
 
       {/* 【課題33】エラーメッセージ */}
       {hasError && (
-        <span id={`${name}-error`} className="input-field__error" role="alert">
+        <span name={`${name}-error`} className="input-field__error" role="alert">
           {error}
         </span>
       )}

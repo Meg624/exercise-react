@@ -1,12 +1,12 @@
 // ContactForm.tsx
-import type React from 'react'
+import React, { useEffect } from 'react'
 import { useForm } from '../hooks/useForm'
-import { CheckboxField } from './CheckboxField'
 import { InputField } from './InputField'
+import { CheckboxField } from './CheckboxField'
 import { RadioGroup } from './RadioGroup'
 import { SelectField } from './SelectField'
 
-// 【課題41】FormDataインターフェースを定義
+// 【課題41】FormData型
 type FormData = {
   name: string
   email: string
@@ -16,18 +16,20 @@ type FormData = {
   subscribe: boolean
 }
 
-function ContactForm() {
-  // 【課題42】フォーム初期値を設定
+const STORAGE_KEY = "contactFormData"
+
+export const ContactForm: React.FC = () => {
+  // 【課題42】初期値
   const initialValues: FormData = {
     name: '',
     email: '',
-    subject: 'inquiry', // ラジオ初期選択
+    subject: 'inquiry',
     category: '',
     message: '',
     subscribe: false,
   }
 
-  // 【課題43】バリデーションルールを定義
+  // 【課題43】バリデーション
   const validationRules = {
     name: { required: true, minLength: 2, maxLength: 50 },
     email: { required: true, pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/ },
@@ -35,23 +37,40 @@ function ContactForm() {
     message: { required: true, minLength: 10, maxLength: 500 },
   }
 
-  // 【課題44】フォーム送信処理を実装
+  // 【課題44】送信処理
   const handleFormSubmit = async (formData: FormData) => {
     console.log('Form submitted', formData)
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    alert('フォームが送信されました! ありがとうございます!')
+    alert('フォームが送信されました！')
+    localStorage.removeItem(STORAGE_KEY) // 送信後に保存データ削除
     resetForm()
   }
 
-  // 【課題45】useFormフック使用
-  const { values, errors, touched, isSubmitting, isValid, handleChange, handleBlur, handleSubmit, resetForm } =
+  // 【課題45】useForm
+  const { values, errors, touched, isSubmitting, isValid, handleChange, handleBlur, handleSubmit, resetForm, setValues } =
     useForm<FormData>({
       initialValues,
       validationRules,
       onSubmit: handleFormSubmit,
     })
 
-  // 【課題46】カテゴリーオプション
+  // 初回マウント時に localStorage からデータ復元
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        setValues(JSON.parse(saved))
+      } catch (e) {
+        console.error("保存データの読み込みに失敗しました", e)
+      }
+    }
+  }, [setValues])
+
+  // 値が変わるたびに localStorage に保存
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(values))
+  }, [values])
+
   const categoryOptions = [
     { value: 'general', label: '一般的な質問' },
     { value: 'technical', label: '技術的な質問' },
@@ -59,7 +78,6 @@ function ContactForm() {
     { value: 'other', label: 'その他' },
   ]
 
-  // 【課題47】件名オプション
   const subjectOptions = [
     { value: 'inquiry', label: 'お問い合わせ' },
     { value: 'feedback', label: 'フィードバック' },
@@ -67,11 +85,10 @@ function ContactForm() {
   ]
 
   return (
-    // 【課題48】form要素実装
     <form onSubmit={handleSubmit} className="contact-form" noValidate>
       <h2 className="contact-form__title">お問い合わせフォーム</h2>
 
-      {/* 【課題49】名前入力フィールド */}
+      {/* 名前 */}
       <InputField
         label="お名前"
         name="name"
@@ -79,12 +96,12 @@ function ContactForm() {
         error={errors.name}
         touched={touched.name}
         required
-        placeholder="須田出井 太郎"
+        placeholder="例: 山田 太郎"
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={handleBlur('name')}
       />
 
-      {/* 【課題50】メールアドレス入力フィールド */}
+      {/* メール */}
       <InputField
         label="メールアドレス"
         name="email"
@@ -95,10 +112,10 @@ function ContactForm() {
         required
         placeholder="example@email.com"
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={handleBlur('email')}
       />
 
-      {/* 【課題51】件名ラジオグループ */}
+      {/* 件名 */}
       <RadioGroup
         label="件名"
         name="subject"
@@ -108,10 +125,10 @@ function ContactForm() {
         touched={touched.subject}
         required
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={handleBlur('subject')}
       />
 
-      {/* 【課題52】カテゴリー選択フィールド */}
+      {/* カテゴリー */}
       <SelectField
         label="カテゴリー"
         name="category"
@@ -120,35 +137,28 @@ function ContactForm() {
         error={errors.category}
         touched={touched.category}
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={handleBlur('category')}
       />
 
-      {/* 【課題53】メッセージ入力 */}
-      <div className="input-field">
-        <label htmlFor="message" className="input-field__label">
-          メッセージ
-          <span className="input-field__required">*</span>
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          value={values.message}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={`input-field__textarea ${touched.message && errors.message ? 'input-field__textarea--error' : ''}`}
-          rows={5}
-          placeholder="お問い合わせ内容をご記入ください"
-          aria-invalid={touched.message && !!errors.message}
-          aria-describedby={touched.message && errors.message ? 'message-error' : undefined}
-        />
-        {touched.message && errors.message && (
-          <span id="message-error" className="input-field__error" role="alert">
-            {errors.message}
-          </span>
-        )}
-      </div>
+      {/* メッセージ */}
+      <InputField
+        label="メッセージ"
+        name="message"
+        value={values.message}
+        error={errors.message}
+        touched={touched.message}
+        required
+        placeholder="お問い合わせ内容をご記入ください"
+        onChange={handleChange}
+        onBlur={handleBlur('message')}
+        className={`input-field__textarea ${
+          touched.message && errors.message ? "input-field__textarea--error" : ""
+        }`}
+        isTextarea
+        rows={5}
+      />
 
-      {/* 【課題54】購読チェックボックス */}
+      {/* 購読 */}
       <CheckboxField
         label="メールマガジンを購読する"
         name="subscribe"
@@ -156,15 +166,22 @@ function ContactForm() {
         error={errors.subscribe}
         touched={touched.subscribe}
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={handleBlur('subscribe')}
       />
 
-      {/* 【課題55】送信・リセットボタン */}
+      {/* ボタン */}
       <div className="contact-form__actions">
-        <button type="submit" className="btn btn--primary" disabled={isSubmitting || !isValid}>
+        <button type="submit" className="btn btn--primary" disabled={isSubmitting}>
           {isSubmitting ? '送信中...' : '送信'}
         </button>
-        <button type="button" className="btn btn--secondary" onClick={resetForm}>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          onClick={() => {
+            resetForm()
+            localStorage.removeItem(STORAGE_KEY) // リセット時も削除
+          }}
+        >
           リセット
         </button>
       </div>
@@ -173,4 +190,3 @@ function ContactForm() {
 }
 
 export default ContactForm
-
