@@ -1,11 +1,12 @@
-// 【課題24】SelectFieldコンポーネント
+
 import type React from 'react'
 
+// 【課題24】SelectOption
 type SelectOption = {
   value: string
   label: string
 }
-
+// 【課題25】SelectFieldProps
 type SelectFieldProps = {
   label: string
   name: string

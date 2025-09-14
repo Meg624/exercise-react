@@ -31,30 +31,46 @@ export const ContactForm: React.FC = () => {
 
   // 【課題43】バリデーション
   const validationRules = {
-    name: { required: true, minLength: 2, maxLength: 50 },
+    name: {
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+      // 追加：数字を含む場合エラーにする正規表現
+      pattern: /^[^\d]+$/, 
+    },
     email: { required: true, pattern: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/ },
     subject: { required: true },
-    message: { required: true, minLength: 10, maxLength: 500 },
-  }
+    message: { required: true, minLength: 10, maxLength: 500, pattern: /^[^\d]+$/ },
+  } // nameとmessageに数字を含む場合エラーにするパターンを追加
 
   // 【課題44】送信処理
   const handleFormSubmit = async (formData: FormData) => {
     console.log('Form submitted', formData)
     await new Promise((resolve) => setTimeout(resolve, 1000))
     alert('フォームが送信されました！')
-    localStorage.removeItem(STORAGE_KEY) // 送信後に保存データ削除
+    localStorage.removeItem(STORAGE_KEY)
     resetForm()
   }
 
   // 【課題45】useForm
-  const { values, errors, touched, isSubmitting, isValid, handleChange, handleBlur, handleSubmit, resetForm, setValues } =
-    useForm<FormData>({
-      initialValues,
-      validationRules,
-      onSubmit: handleFormSubmit,
-    })
+  const {
+    values,
+    errors,
+    touched,
+    isSubmitting,
+    // isValid,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    resetForm,
+    setValues,
+  } = useForm<FormData>({
+    initialValues,
+    validationRules,
+    onSubmit: handleFormSubmit,
+  })
 
-  // 初回マウント時に localStorage からデータ復元
+  // 初回マウント時に localStorage から復元
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
@@ -88,7 +104,7 @@ export const ContactForm: React.FC = () => {
     <form onSubmit={handleSubmit} className="contact-form" noValidate>
       <h2 className="contact-form__title">お問い合わせフォーム</h2>
 
-      {/* 名前 */}
+      {/* 【課題46】名前 */}
       <InputField
         label="お名前"
         name="name"
@@ -101,7 +117,7 @@ export const ContactForm: React.FC = () => {
         onBlur={handleBlur('name')}
       />
 
-      {/* メール */}
+      {/* 【課題47】メール */}
       <InputField
         label="メールアドレス"
         name="email"
@@ -115,7 +131,7 @@ export const ContactForm: React.FC = () => {
         onBlur={handleBlur('email')}
       />
 
-      {/* 件名 */}
+      {/* 【課題48】件名 */}
       <RadioGroup
         label="件名"
         name="subject"
@@ -151,14 +167,12 @@ export const ContactForm: React.FC = () => {
         placeholder="お問い合わせ内容をご記入ください"
         onChange={handleChange}
         onBlur={handleBlur('message')}
-        className={`input-field__textarea ${
-          touched.message && errors.message ? "input-field__textarea--error" : ""
-        }`}
-        isTextarea
+        className={`input-field__textarea ${touched.message && errors.message ? "input-field__textarea--error" : ""}`}
+        isTextArea={true}
         rows={5}
       />
 
-      {/* 購読 */}
+      {/* 【課題49】購読 */}
       <CheckboxField
         label="メールマガジンを購読する"
         name="subscribe"
@@ -169,7 +183,7 @@ export const ContactForm: React.FC = () => {
         onBlur={handleBlur('subscribe')}
       />
 
-      {/* ボタン */}
+      {/* 【課題50】ボタン */}
       <div className="contact-form__actions">
         <button type="submit" className="btn btn--primary" disabled={isSubmitting}>
           {isSubmitting ? '送信中...' : '送信'}
@@ -179,7 +193,7 @@ export const ContactForm: React.FC = () => {
           className="btn btn--secondary"
           onClick={() => {
             resetForm()
-            localStorage.removeItem(STORAGE_KEY) // リセット時も削除
+            localStorage.removeItem(STORAGE_KEY)
           }}
         >
           リセット

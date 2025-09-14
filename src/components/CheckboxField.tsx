@@ -1,6 +1,6 @@
-// 【課題34】CheckboxFieldコンポーネント
 import type React from 'react'
 
+// 【課題30】CheckboxFieldProps
 type CheckboxFieldProps = {
   label: string
   name: string
@@ -25,6 +25,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
   return (
     <div className="checkbox-field">
       <div className="checkbox-field__wrapper">
+        {/* 【課題31】checkbox */}
         <input
           id={name}
           name={name}
@@ -34,6 +35,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({
           onBlur={onBlur}
           className={`checkbox-field__input ${hasError ? 'checkbox-field__input--error' : ''}`}
         />
+        {/* 【課題32】ラベル */}
         <label htmlFor={name} className="checkbox-field__label">
           <span className="checkbox-field__checkmark" />
           <span className="checkbox-field__text">{label}</span>
